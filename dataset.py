@@ -7,7 +7,7 @@ from typing import Tuple, List
 import numpy as np
 import torch
 from PIL import Image
-from torch.utils.data import Dataset, Subset, random_split
+from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 from torchvision.transforms import *
 
@@ -104,6 +104,28 @@ class AgeLabels(int, Enum):
             return cls.MIDDLE
         else:
             return cls.OLD
+
+
+class Subset(Dataset):
+    r"""
+    Subset of a dataset at specified indices.
+
+    Arguments:
+        dataset (Dataset): The whole Dataset
+        indices (sequence): Indices in the whole set selected for subset
+    """
+    def __init__(self, dataset, indices):
+        self.dataset = dataset
+        self.indices = indices
+
+    def __getitem__(self, idx):
+        return self.dataset[self.indices[idx]]
+
+    def __len__(self):
+        return len(self.indices)
+
+    def set_transform(self, transform):
+        self.dataset.transform = transform
 
 
 class MaskBaseDataset(Dataset):
