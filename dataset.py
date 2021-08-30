@@ -275,7 +275,7 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
         length = len(profiles)
         n_val = int(length * val_ratio)
 
-        val_indices = set(random.choices(range(length), k=n_val))
+        val_indices = set(np.random.choice(length, size=n_val, replace=False))
         train_indices = set(range(length)) - val_indices
         return {
             "train": train_indices,

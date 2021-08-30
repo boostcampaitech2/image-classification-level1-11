@@ -84,6 +84,22 @@ def increment_path(path, exist_ok=False):
         return f"{path}{n}"
 
 
+def draw_confusion_matrix(true, pred, dir):
+    cm = confusion_matrix(true, pred)
+    df = pd.DataFrame(cm/np.sum(cm, axis=1)[:, None], 
+                index=list(range(18)), columns=list(range(18)))
+    df = df.fillna(0)  # NaN 값을 0으로 변경
+
+    plt.figure(figsize=(16, 16))
+    plt.tight_layout()
+    plt.suptitle('Confusion Matrix')
+    sn.heatmap(df, annot=True, cmap=sn.color_palette("Blues"))
+    plt.xlabel("Predicted Label")
+    plt.ylabel("True label")
+    plt.savefig(f"{dir}/confusion_matrix.png")
+    plt.close('all')
+
+
 def train(data_dir, model_dir, args):
     seed_everything(args.seed)
 
@@ -162,6 +178,7 @@ def train(data_dir, model_dir, args):
 
     best_val_acc = 0
     best_val_loss = np.inf
+    best_val_f1_score = 0
     for epoch in range(args.epochs):
         # train loop
         model.train()
@@ -205,6 +222,7 @@ def train(data_dir, model_dir, args):
             model.eval()
             val_loss_items = []
             val_acc_items = []
+            predicts, answers = [], []
             figure = None
             for val_batch in val_loader:
                 inputs, labels = val_batch
@@ -226,18 +244,33 @@ def train(data_dir, model_dir, args):
                         inputs_np, labels, preds, n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
                     )
 
+                answers.extend(labels.cpu().numpy())
+                predicts.extend(preds.cpu().numpy())
+
             val_loss = np.sum(val_loss_items) / len(val_loader)
             val_acc = np.sum(val_acc_items) / len(val_set)
+            val_f1_score = f1_score(answers, predicts, average='macro')
             best_val_loss = min(best_val_loss, val_loss)
-            if val_acc > best_val_acc:
-                print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
+
+            classification_result = classification_report(answers, predicts)
+
+            if val_f1_score > best_val_f1_score:
+                print(f"New best model for val f1 score : {val_f1_score:4.2}! saving the best model..")
+                print(f"New best model for val accuracy : {val_acc:4.2%}!")
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
+                best_val_f1_score = val_f1_score
                 best_val_acc = val_acc
+
+                draw_confusion_matrix(answers, predicts, save_dir)
+                with open(f"{save_dir}/classification_result_of_best_model.txt", "w") as f:
+                    f.write(classification_result)
+
             torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
             print(
-                f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2} || "
-                f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
+                f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2}, f1 score: {val_f1_score:4.2} || "
+                f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}, best f1: {best_val_f1_score:4.2}"
             )
+            print(classification_result)
             logger.add_scalar("Val/loss", val_loss, epoch)
             logger.add_scalar("Val/accuracy", val_acc, epoch)
             logger.add_figure("results", figure, epoch)
