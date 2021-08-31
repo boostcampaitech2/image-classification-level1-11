@@ -145,7 +145,7 @@ def train(data_dir, model_dir, args):
         # -- data_loader
         train_set, val_set = dataset.split_dataset()
         train_set = SubDataset(train_set, transform=transform)
-        val_set = SubDataset(train_set, transform=validation_transform)
+        val_set = SubDataset(val_set, transform=validation_transform)
 
         train_loader = DataLoader(
             train_set,
@@ -190,6 +190,7 @@ def train(data_dir, model_dir, args):
         best_val_acc = 0
         best_val_loss = np.inf
         best_val_f1_score = 0
+
         for epoch in range(args.epochs[i]):
             # train loop
             model.train()
@@ -235,8 +236,7 @@ def train(data_dir, model_dir, args):
                 val_acc_items = []
                 predicts, answers = [], []
                 figure = None
-                for val_batch in val_loader:
-                    inputs, labels = val_batch
+                for inputs, labels in val_loader:
                     inputs = inputs.to(device)
                     labels = labels.to(device)
 
