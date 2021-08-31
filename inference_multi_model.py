@@ -50,13 +50,13 @@ def inference(data_dir, model_dir, output_dir, args):
                             ).to(device)
         model.eval()
         models.append(model)
-    
+
     img_root = os.path.join(data_dir, 'images')
     info_path = os.path.join(data_dir, 'info.csv')
     info = pd.read_csv(info_path)
 
     img_paths = [os.path.join(img_root, img_id) for img_id in info.ImageID]
-    dataset = TestDataset(img_paths, args.resize)
+    dataset = TestDataset(img_paths)
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -69,13 +69,13 @@ def inference(data_dir, model_dir, output_dir, args):
     print("Calculating inference results..")
     preds = []
     with torch.no_grad():
-        for idx, images in enumerate(loader):
+        for images in tqdm(loader):
             images = images.to(device)
-
+            
             results = []
             for model in models:
                 results.append(model(images).argmax(dim=-1).cpu().numpy())
-            
+
             mask_label = results[0]
             gender_label = results[1]
             age_lable = ages_subdiv_to_origin(results[2])
