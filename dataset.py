@@ -6,14 +6,10 @@ from typing import Tuple, List
 
 import numpy as np
 import torch
-
-from torch.utils.data import Dataset, Subset, random_split
+from PIL import Image
+from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 from torchvision.transforms import *
-
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
-import cv2
 
 IMG_EXTENSIONS = [
     ".jpg", ".JPG", ".jpeg", ".JPEG", ".png",
@@ -26,30 +22,15 @@ def is_image_file(filename):
 
 
 class BaseAugmentation:
-    def __init__(self, mean, std, **args):
-        self.transform = A.Compose([
-            A.CenterCrop(350, 300),
-            A.Resize(224, 224),
-            A.HorizontalFlip(), # Same with transforms.RandomHorizontalFilp()
-            A.Normalize(mean=mean, std=std),
-            ToTensorV2(),
+    def __init__(self, resize, mean, std, **args):
+        self.transform = transforms.Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
         ])
 
     def __call__(self, image):
-        return self.transform(image=image)['image']
-
-
-class ValAugmentation:
-    def __init__(self, mean, std, **args):
-        self.transform = A.Compose([
-            A.CenterCrop(350, 300),
-            A.Resize(224, 224),
-            A.Normalize(mean=mean, std=std),
-            ToTensorV2(),
-        ])
-
-    def __call__(self, image):
-        return self.transform(image=image)['image']
+        return self.transform(image)
 
 
 class AddGaussianNoise(object):
@@ -69,18 +50,19 @@ class AddGaussianNoise(object):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
 
 
-# class CustomAugmentation:
-#     def __init__(self, resize, mean, std, **args):
-#         self.transform = transforms.Compose([
-#             CenterCrop((320, 256)),
-#             A.Resize(224, 224),
-#             ColorJitter(0.1, 0.1, 0.1, 0.1),
-#             Normalize(mean=mean, std=std),
-#             AddGaussianNoise()
-#         ])
-#
-#     def __call__(self, image):
-#         return self.transform(image)
+class CustomAugmentation:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = transforms.Compose([
+            CenterCrop((320, 256)),
+            Resize(resize, Image.BILINEAR),
+            ColorJitter(0.1, 0.1, 0.1, 0.1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+            AddGaussianNoise()
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
 
 
 class MaskLabels(int, Enum):
@@ -122,6 +104,28 @@ class AgeLabels(int, Enum):
             return cls.MIDDLE
         else:
             return cls.OLD
+
+
+class Subset(Dataset):
+    r"""
+    Subset of a dataset at specified indices.
+
+    Arguments:
+        dataset (Dataset): The whole Dataset
+        indices (sequence): Indices in the whole set selected for subset
+    """
+    def __init__(self, dataset, indices):
+        self.dataset = dataset
+        self.indices = indices
+
+    def __getitem__(self, idx):
+        return self.dataset[self.indices[idx]]
+
+    def __len__(self):
+        return len(self.indices)
+
+    def set_transform(self, transform):
+        self.dataset.transform = transform
 
 
 class MaskBaseDataset(Dataset):
@@ -183,7 +187,7 @@ class MaskBaseDataset(Dataset):
             sums = []
             squared = []
             for image_path in self.image_paths[:3000]:
-                image = cv2.imread(image_path).astype(np.int32)
+                image = np.array(Image.open(image_path)).astype(np.int32)
                 sums.append(image.mean(axis=(0, 1)))
                 squared.append((image ** 2).mean(axis=(0, 1)))
 
@@ -194,7 +198,7 @@ class MaskBaseDataset(Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
-        # assert self.transform is not None, ".set_tranform 메소드를 이용하여 transform 을 주입해주세요"
+        assert self.transform is not None, ".set_tranform 메소드를 이용하여 transform 을 주입해주세요"
 
         image = self.read_image(index)
         mask_label = self.get_mask_label(index)
@@ -202,8 +206,8 @@ class MaskBaseDataset(Dataset):
         age_label = self.get_age_label(index)
         multi_class_label = self.encode_multi_class(mask_label, gender_label, age_label)
 
-        # image_transform = self.transform(image)
-        return image, multi_class_label
+        image_transform = self.transform(image)
+        return image_transform, multi_class_label
 
     def __len__(self):
         return len(self.image_paths)
@@ -219,7 +223,7 @@ class MaskBaseDataset(Dataset):
 
     def read_image(self, index):
         image_path = self.image_paths[index]
-        return cv2.imread(image_path)
+        return Image.open(image_path)
 
     @staticmethod
     def encode_multi_class(mask_label, gender_label, age_label) -> int:
@@ -311,43 +315,30 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
     def split_dataset(self) -> List[Subset]:
         return [Subset(self, indices) for phase, indices in self.indices.items()]
 
-class SubDataset(Dataset):
-    def __init__(self, subset, transform=None):
-        self.subset = subset
-        self.transform = transform
-
-    def __getitem__(self, idx):
-        image, label = self.subset[idx]
-        if self.transform:
-            image = self.transform(image)
-        return image, label
-
-    def __len__(self):
-        return len(self.subset)
-
-
 
 class TestDataset(Dataset):
-    def __init__(self, img_paths, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246)):
+    def __init__(self, img_paths, resize, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), transform=None):
         self.img_paths = img_paths
-        self.transform = A.Compose([
-            A.CenterCrop(350, 300),
-            A.Resize(224, 224),
-            A.Normalize(mean=mean, std=std),
-            ToTensorV2(),
-        ])
+        if transform is not None:
+            self.transform = transform
+        else:
+            self.transform = transforms.Compose([
+                Resize(resize, Image.BILINEAR),
+                ToTensor(),
+                Normalize(mean=mean, std=std),
+            ])
 
     def __getitem__(self, index):
-        image = cv2.imread(self.img_paths[index])
+        image = Image.open(self.img_paths[index])
 
         if self.transform:
-            image = self.transform(image=image)['image']
+            image = self.transform(image)
         return image
 
     def __len__(self):
         return len(self.img_paths)
+    
 
-      
 class AgeSubdivLabels(int, Enum):
     _10s = 0
     _20s = 1
@@ -453,7 +444,7 @@ class DJ_SeparatedDataset_Gender(DJ_MaskAgeSubdivDataset):
 
     
 class DJ_SeparatedDataset_Age(DJ_MaskAgeSubdivDataset):
-    num_classes = 3
+    num_classes = 6
 
     def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
         super().__init__(data_dir, mean, std, val_ratio)
