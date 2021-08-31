@@ -84,10 +84,10 @@ def increment_path(path, exist_ok=False):
         return f"{path}{n}"
 
 
-def draw_confusion_matrix(true, pred, dir):
+def draw_confusion_matrix(true, pred, dir, num_classes):
     cm = confusion_matrix(true, pred)
     df = pd.DataFrame(cm/np.sum(cm, axis=1)[:, None], 
-                index=list(range(18)), columns=list(range(18)))
+                index=list(range(num_classes)), columns=list(range(num_classes)))
     df = df.fillna(0)  # NaN 값을 0으로 변경
 
     plt.figure(figsize=(16, 16))
@@ -114,7 +114,7 @@ def train(data_dir, model_dir, args):
     dataset = dataset_module(
         data_dir=data_dir,
     )
-    num_classes = dataset.num_classes  # 18
+    num_classes = dataset.num_classes
 
     # -- augmentation
     transform_module = getattr(import_module("dataset"), args.augmentation)  # default: BaseAugmentation
@@ -157,12 +157,14 @@ def train(data_dir, model_dir, args):
     # -- model
     model_module = getattr(import_module("model"), args.model)  # default: BaseModel
     model = model_module(
-        args.config
+        args.config,
+        num_classes
     ).to(device)
+    
     model = torch.nn.DataParallel(model)
 
     # -- loss & metric
-    criterion = create_criterion(args.criterion)  # default: cross_entropy
+    criterion = create_criterion(args.criterion, classes=num_classes)  # default: cross_entropy
     opt_module = getattr(import_module("torch.optim"), args.optimizer)  # default: SGD
     optimizer = opt_module(
         filter(lambda p: p.requires_grad, model.parameters()),
@@ -179,6 +181,7 @@ def train(data_dir, model_dir, args):
     best_val_acc = 0
     best_val_loss = np.inf
     best_val_f1_score = 0
+    
     for epoch in range(args.epochs):
         # train loop
         model.train()
@@ -186,12 +189,14 @@ def train(data_dir, model_dir, args):
         matches = 0
         for idx, train_batch in enumerate(train_loader):
             inputs, labels = train_batch
+            
             inputs = inputs.to(device)
             labels = labels.to(device)
 
             optimizer.zero_grad()
 
             outs = model(inputs)
+            
             preds = torch.argmax(outs, dim=-1)
             loss = criterion(outs, labels)
 
@@ -261,7 +266,7 @@ def train(data_dir, model_dir, args):
                 best_val_f1_score = val_f1_score
                 best_val_acc = val_acc
 
-                draw_confusion_matrix(answers, predicts, save_dir)
+                draw_confusion_matrix(answers, predicts, save_dir, num_classes)
                 with open(f"{save_dir}/classification_result_of_best_model.txt", "w") as f:
                     f.write(classification_result)
 

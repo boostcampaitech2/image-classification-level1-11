@@ -15,7 +15,6 @@
     "lr_decay_step": 20,
     "log_interval": 20,
     "config": {
-        "num_classes": 18,
         "pretrained": 1,
         "drop_rate": 0.1
     }

@@ -6,16 +6,17 @@ import timm
 
 
 class BaseModel(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
 
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.drop_rate = config["drop_rate"]
 
         self.conv1 = nn.Conv2d(3, 32, kernel_size=7, stride=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1)
-        self.dropout1 = nn.Dropout(0.25)
-        self.dropout2 = nn.Dropout(0.25)
+        self.dropout1 = nn.Dropout(self.drop_rate)
+        self.dropout2 = nn.Dropout(self.drop_rate)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(128, self.num_classes)
 
@@ -58,11 +59,12 @@ class MyModel(nn.Module):
 
 
 class Resnet50(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.resnet50(pretrained=True)
+        self.model = models.resnet50(pretrained=self.pretrained)
         self.model.fc = nn.Linear(2048, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.fc.weight)
 
@@ -71,11 +73,12 @@ class Resnet50(nn.Module):
 
 
 class Resnet152(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.resnet152(pretrained=True)
+        self.model = models.resnet152(pretrained=self.pretrained)
         self.model.fc = nn.Linear(2048, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.fc.weight)
 
@@ -84,11 +87,12 @@ class Resnet152(nn.Module):
 
 
 class Resnext101(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.resnext101_32x8d(pretrained=True)
+        self.model = models.resnext101_32x8d(pretrained=self.pretrained)
         self.model.fc = nn.Linear(2048, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.fc.weight)
 
@@ -97,11 +101,12 @@ class Resnext101(nn.Module):
 
 
 class Inceptionv3(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.inception_v3(pretrained=True)
+        self.model = models.inception_v3(pretrained=self.pretrained)
         self.model.fc = nn.Linear(2048, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.fc.weight)
 
@@ -110,11 +115,12 @@ class Inceptionv3(nn.Module):
 
 
 class Mobilenetv3(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.mobilenet_v3_large(pretrained=True)
+        self.model = models.mobilenet_v3_large(pretrained=self.pretrained)
         self.model.classifier = nn.Linear(1280, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.classifier.weight)
 
@@ -123,11 +129,12 @@ class Mobilenetv3(nn.Module):
 
 
 class Densenet121(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.densenet121(pretrained=True)
+        self.model = models.densenet121(pretrained=self.pretrained)
         self.model.classifier = nn.Linear(1024, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.classifier.weight)
 
@@ -136,11 +143,12 @@ class Densenet121(nn.Module):
 
 
 class Densenet161(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.densenet161(pretrained=True)
+        self.model = models.densenet161(pretrained=self.pretrained)
         self.model.classifier = nn.Linear(2208, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.classifier.weight)
 
@@ -149,13 +157,26 @@ class Densenet161(nn.Module):
 
 
 class Densenet201(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_classes):
         super().__init__()
-        self.num_classes = config["num_classes"]
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
 
-        self.model = models.densenet201(pretrained=True)
+        self.model = models.densenet201(pretrained=self.pretrained)
         self.model.classifier = nn.Linear(1920, self.num_classes, bias=True)
         nn.init.kaiming_normal_(self.model.classifier.weight)
 
     def forward(self, x):
         return self.model(x)
+    
+    
+class VIT(nn.Module):
+    def __init__(self, config, num_classes):
+        super().__init__()
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
+        
+        self.vit = timm.create_model('vit_base_patch16_224', pretrained=self.pretrained, num_classes=self.num_classes)
+    
+    def forward(self, x):
+        return self.vit(x)
