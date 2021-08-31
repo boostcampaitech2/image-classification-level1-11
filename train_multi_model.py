@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import classification_report, f1_score, confusion_matrix
 
-from dataset import MaskBaseDataset
+from dataset import MaskBaseDataset, SubDataset
 from loss import create_criterion
 from util import read_json, update_argument
 
@@ -144,9 +144,8 @@ def train(data_dir, model_dir, args):
         
         # -- data_loader
         train_set, val_set = dataset.split_dataset()
-
-        train_set.set_transform(transform)
-        val_set.set_transform(validation_transform)
+        train_set = SubDataset(train_set, transform=transform)
+        val_set = SubDataset(train_set, transform=validation_transform)
 
         train_loader = DataLoader(
             train_set,
