@@ -104,12 +104,16 @@ def train(data_dir, model_dir, args):
     seed_everything(args.seed)
 
     base_save_dir = increment_path(os.path.join(model_dir, args.name))
+    os.makedirs(base_save_dir, exist_ok=True)
 
     # -- settings
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
     tasks = ["Mask", "Gender", "Age"]
+
+    with open(os.path.join(base_save_dir, 'config.json'), 'w', encoding='utf-8') as f:
+            json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     for i, task in enumerate(tasks):
         model = None
@@ -182,9 +186,7 @@ def train(data_dir, model_dir, args):
 
         # -- logging
         logger = SummaryWriter(log_dir=save_dir)
-        with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
-            json.dump(vars(args), f, ensure_ascii=False, indent=4)
-
+       
 
         best_val_acc = 0
         best_val_loss = np.inf
@@ -275,7 +277,7 @@ def train(data_dir, model_dir, args):
                     with open(f"{save_dir}/classification_result_of_best_model.txt", "w") as f:
                         f.write(classification_result)
                 
-                torch.save(model.module.state_dict(), f"{save_dir}/last_{task}.pth")
+                torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
                 print(
                     f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2}, f1 score: {val_f1_score:4.2} || "
                     f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}, best f1: {best_val_f1_score:4.2}"
