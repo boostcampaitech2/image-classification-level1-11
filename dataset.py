@@ -346,3 +346,119 @@ class TestDataset(Dataset):
 
     def __len__(self):
         return len(self.img_paths)
+
+      
+class AgeSubdivLabels(int, Enum):
+    _10s = 0
+    _20s = 1
+    _30s = 2
+    _40s = 3
+    _50s = 4
+    _60s = 5
+
+    @classmethod
+    def from_number(cls, value: str) -> int:
+        try:
+            value = int(value)
+        except Exception:
+            raise ValueError(f"Age value should be numeric, {value}")
+
+        if value < 20:
+            return cls._10s
+        elif value < 30:
+            return cls._20s
+        elif value < 40:
+            return cls._30s
+        elif value < 50:
+            return cls._40s
+        elif value < 60:
+            return cls._50s
+        else:
+            return cls._60s
+        
+    
+class DJ_MaskAgeSubdivDataset(MaskSplitByProfileDataset):
+    '''
+    연령대를 10대 단위로 더 세분화하여 labeling 하는 dataset 입니다.
+    
+    '''
+    
+    def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
+        super().__init__(data_dir, mean, std, val_ratio)
+    
+    def setup(self):
+        profiles = os.listdir(self.data_dir)
+        profiles = [profile for profile in profiles if not profile.startswith(".")]
+        split_profiles = self._split_profile(profiles, self.val_ratio)
+
+        cnt = 0
+        for phase, indices in split_profiles.items():
+            for _idx in indices:
+                profile = profiles[_idx]
+                img_folder = os.path.join(self.data_dir, profile)
+                for file_name in os.listdir(img_folder):
+                    _file_name, ext = os.path.splitext(file_name)
+                    if _file_name not in self._file_names:  # "." 로 시작하는 파일 및 invalid 한 파일들은 무시합니다
+                        continue
+
+                    img_path = os.path.join(self.data_dir, profile, file_name)  # (resized_data, 000004_male_Asian_54, mask1.jpg)
+                    mask_label = self._file_names[_file_name]
+
+                    id, gender, race, age = profile.split("_")
+                    gender_label = GenderLabels.from_str(gender)
+                    age_label = AgeSubdivLabels.from_number(age)
+
+                    self.image_paths.append(img_path)
+                    self.mask_labels.append(mask_label)
+                    self.gender_labels.append(gender_label)
+                    self.age_labels.append(age_label)
+
+                    self.indices[phase].append(cnt)
+                    cnt += 1
+
+    @staticmethod
+    def encode_multi_class(mask_label, gender_label, age_label) -> int:
+        return mask_label * 12 + gender_label * 6 + age_label
+
+    @staticmethod
+    def decode_multi_class(multi_class_label) -> Tuple[MaskLabels, GenderLabels, AgeLabels]:
+        mask_label = (multi_class_label // 12) % 3
+        gender_label = (multi_class_label // 6) % 2
+        age_label = multi_class_label % 6
+        return mask_label, gender_label, age_label
+
+
+class DJ_SeparatedDataset_Mask(DJ_MaskAgeSubdivDataset):
+    num_classes = 3
+
+    def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
+        super().__init__(data_dir, mean, std, val_ratio)
+
+    def __getitem__(self, index):
+        image_transform, multi_class_label = super().__getitem__(index)
+        mask_label, gender_label, age_label = super().decode_multi_class(multi_class_label)
+        return image_transform, mask_label
+
+    
+class DJ_SeparatedDataset_Gender(DJ_MaskAgeSubdivDataset):
+    num_classes = 2
+
+    def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
+        super().__init__(data_dir, mean, std, val_ratio)
+
+    def __getitem__(self, index):
+        image_transform, multi_class_label = super().__getitem__(index)
+        mask_label, gender_label, age_label = super().decode_multi_class(multi_class_label)
+        return image_transform, gender_label
+
+    
+class DJ_SeparatedDataset_Age(DJ_MaskAgeSubdivDataset):
+    num_classes = 3
+
+    def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
+        super().__init__(data_dir, mean, std, val_ratio)
+
+    def __getitem__(self, index):
+        image_transform, multi_class_label = super().__getitem__(index)
+        mask_label, gender_label, age_label = super().decode_multi_class(multi_class_label)
+        return image_transform, age_label
