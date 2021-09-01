@@ -18,13 +18,13 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 import warnings
-import sam
 
 from torch.optim.lr_scheduler import StepLR
 
 from dataset import MaskBaseDataset, SubDataset
 from loss import create_criterion
 import model as module
+import optimizer
 
 from parse_config import ConfigParser
 
@@ -192,7 +192,7 @@ def train(data_dir, model_dir, args):
     base_optimizer = None
     if args.optimizer == "SAM":
         base_optimizer = getattr(import_module("torch.optim"), args.base_optimizer)
-        opt_module = getattr(import_module("sam"), args.optimizer)
+        opt_module = getattr(import_module("optimizer"), args.optimizer)
         optimizer = opt_module(
             filter(lambda p: p.requires_grad, model.parameters()),
             base_optimizer=base_optimizer,
@@ -251,7 +251,7 @@ def train(data_dir, model_dir, args):
             loss = closure()
             loss.backward()
 
-            if isinstance(optimizer, sam.SAM):
+            if isinstance(optimizer, optimizer.SAM):
                 optimizer.first_step(zero_grad=True)
                 loss = closure()
                 loss.backward()
