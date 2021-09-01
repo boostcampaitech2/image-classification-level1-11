@@ -453,7 +453,7 @@ class DJ_SeparatedDataset_Gender(DJ_MaskAgeSubdivDataset):
 
     
 class DJ_SeparatedDataset_Age(DJ_MaskAgeSubdivDataset):
-    num_classes = 3
+    num_classes = 6
 
     def __init__(self, data_dir, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246), val_ratio=0.2):
         super().__init__(data_dir, mean, std, val_ratio)

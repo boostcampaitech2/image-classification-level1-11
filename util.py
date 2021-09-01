@@ -14,3 +14,14 @@ def update_argument(args, configs):
         else:
             raise ValueError(f"no argument {arg}")
     return args
+
+def ages_subdiv_to_origin(sdage):
+    result = []
+    for age in sdage:
+        if age < 2:
+            result.append(0)
+        elif age < 5:
+            result.append(1)
+        else:
+            result.append(2)
+    return result

@@ -1,0 +1,21 @@
+{
+    "seed": 2021,
+    "epochs": [1, 2, 1],
+    "dataset": ["DJ_SeparatedDataset_Mask", "DJ_SeparatedDataset_Gender", "DJ_SeparatedDataset_Age"],
+    "augmentation": "BaseAugmentation",
+    "valid_augmentation": "BaseAugmentation",
+    "resize": [224,224],
+    "batch_size": 64,
+    "valid_batch_size": 128,
+    "model": ["Densenet121", "Resnet50", "VIT"],
+    "optimizer": "Adam",
+    "lr": 1e-3,
+    "val_ratio": 0.2,
+    "criterion": "f1",
+    "lr_decay_step": 20,
+    "log_interval": 20,
+    "config": {
+        "pretrained": 1,
+        "drop_rate": 0.1
+    }
+}
