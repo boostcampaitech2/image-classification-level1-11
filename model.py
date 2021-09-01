@@ -180,3 +180,16 @@ class VIT(nn.Module):
     
     def forward(self, x):
         return self.vit(x)
+
+
+class Efficientnet_B4(nn.Module):
+    def __init__(self, config, num_classes):
+        super().__init__()
+        self.num_classes = num_classes
+        self.pretrained = config["pretrained"]
+        
+        self.effi_net = timm.create_model('efficientnet_b4', pretrained=self.pretrained, num_classes=self.num_classes)
+    
+    def forward(self, x):
+        return self.effi_net(x)
+
