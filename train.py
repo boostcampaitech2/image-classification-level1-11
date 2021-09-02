@@ -16,17 +16,11 @@ import torch
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import classification_report, f1_score, confusion_matrix
+from sklearn.metrics import classification_report, f1_score
 
 from dataset import MaskBaseDataset
 from loss import create_criterion
-from util import read_json, update_argument, draw_confusion_matrix, seed_everything
-
-
-
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
+from util import read_json, update_argument, draw_confusion_matrix, seed_everything, get_lr
 
 
 def grid_image(np_images, gts, preds, n=16, shuffle=False):

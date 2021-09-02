@@ -20,13 +20,8 @@ from sklearn.metrics import classification_report, f1_score, confusion_matrix
 
 from dataset import MaskBaseDataset, SubDataset
 from loss import create_criterion
-from util import read_json, update_argument, draw_confusion_matrix, seed_everything
+from util import read_json, update_argument, draw_confusion_matrix, seed_everything, get_lr
 
-
-
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
 
 
 def grid_image(np_images, gts, preds, n=16, shuffle=False):
