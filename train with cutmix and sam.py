@@ -7,7 +7,7 @@ import random
 import re
 from importlib import import_module
 from pathlib import Path
-from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.metrics import f1_score
 import seaborn as sns
 import pandas as pd
 from tqdm import tqdm
@@ -17,19 +17,20 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-import warnings
-
 from torch.optim.lr_scheduler import StepLR
+import warnings
 
 from dataset import MaskBaseDataset, SubDataset
 from loss import create_criterion
 import model as module
 import opt
+from util import draw_confusion_matrix, seed_everything, increment_path, grid_image
 
 from parse_config import ConfigParser
 
 # 경고메세지 끄기
 warnings.filterwarnings(action='ignore')
+
 
 def rand_bbox(size, lam):  # size : [Batch_size, Channel, Width, Height]
     W = size[2]
@@ -49,69 +50,6 @@ def rand_bbox(size, lam):  # size : [Batch_size, Channel, Width, Height]
     bby2 = np.clip(cy + cut_h // 2, 0, H)
 
     return bbx1, bby1, bbx2, bby2
-
-def seed_everything(seed):
-    # torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    # np.random.seed(seed)
-    # random.seed(seed)
-
-
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
-
-
-def grid_image(np_images, gts, preds, n=16, shuffle=False):
-    batch_size = np_images.shape[0]
-    assert n <= batch_size
-
-    choices = random.choices(range(batch_size), k=n) if shuffle else list(range(n))
-    figure = plt.figure(figsize=(12, 18 + 2))  # cautions: hardcoded, 이미지 크기에 따라 figsize 를 조정해야 할 수 있습니다. T.T
-    plt.subplots_adjust(top=0.8)               # cautions: hardcoded, 이미지 크기에 따라 top 를 조정해야 할 수 있습니다. T.T
-    n_grid = np.ceil(n ** 0.5)
-    tasks = ["mask", "gender", "age"]
-    for idx, choice in enumerate(choices):
-        gt = gts[choice].item()
-        pred = preds[choice].item()
-        image = np_images[choice]
-        # title = f"gt: {gt}, pred: {pred}"
-        gt_decoded_labels = MaskBaseDataset.decode_multi_class(gt)
-        pred_decoded_labels = MaskBaseDataset.decode_multi_class(pred)
-        title = "\n".join([
-            f"{task} - gt: {gt_label}, pred: {pred_label}"
-            for gt_label, pred_label, task
-            in zip(gt_decoded_labels, pred_decoded_labels, tasks)
-        ])
-
-        plt.subplot(n_grid, n_grid, idx + 1, title=title)
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
-        plt.imshow(image, cmap=plt.cm.binary)
-
-    return figure
-
-
-def increment_path(path, exist_ok=False):
-    """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
-
-    Args:
-        path (str or pathlib.Path): f"{model_dir}/{args.name}".
-        exist_ok (bool): whether increment path (increment if False).
-    """
-    path = Path(path)
-    if (path.exists() and exist_ok) or (not path.exists()):
-        return str(path)
-    else:
-        dirs = glob.glob(f"{path}*")
-        matches = [re.search(rf"%s(\d+)" % path.stem, d) for d in dirs]
-        i = [int(m.groups()[0]) for m in matches if m]
-        n = max(i) + 1 if i else 2
-        return f"{path}{n}"
 
 
 def train(data_dir, model_dir, args):
@@ -309,7 +247,7 @@ def train(data_dir, model_dir, args):
             if epoch_f1 > best_f1_score:
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
                 best_f1_score = epoch_f1
-                draw_confusion_matrix(y_true, y_pred, save_dir)
+                draw_confusion_matrix(y_true, y_pred, save_dir, num_classes)
 
             torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
 
@@ -326,20 +264,6 @@ def train(data_dir, model_dir, args):
             logger.add_scalar("Val/f1_score", epoch_f1, epoch)
             logger.add_figure("results", figure, epoch)
 
-
-def draw_confusion_matrix(target, pred, path):
-    cm = confusion_matrix(target, pred)
-    df = pd.DataFrame(cm/np.sum(cm, axis=1)[:, None], index=list(range(18)), columns=list(range(18)))
-    df = df.fillna(0).round(4)
-
-    plt.figure(figsize=(16, 16))
-    plt.tight_layout()
-    plt.suptitle('Confusion Matrix')
-    sns.heatmap(df, annot=True, cmap=sns.color_palette("Blues"))
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True label")
-    plt.savefig(os.path.join(path, "confusion_matrix.png"))
-    plt.close('all')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
