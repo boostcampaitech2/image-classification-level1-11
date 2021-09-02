@@ -20,7 +20,7 @@ from sklearn.metrics import classification_report, f1_score, confusion_matrix
 
 from dataset import MaskBaseDataset
 from loss import create_criterion
-from util import read_json, update_argument
+from util import read_json, update_argument, draw_confusion_matrix
 
 
 def seed_everything(seed):
@@ -82,22 +82,6 @@ def increment_path(path, exist_ok=False):
         i = [int(m.groups()[0]) for m in matches if m]
         n = max(i) + 1 if i else 2
         return f"{path}{n}"
-
-
-def draw_confusion_matrix(true, pred, dir, num_classes):
-    cm = confusion_matrix(true, pred)
-    df = pd.DataFrame(cm/np.sum(cm, axis=1)[:, None], 
-                index=list(range(num_classes)), columns=list(range(num_classes)))
-    df = df.fillna(0)  # NaN 값을 0으로 변경
-
-    plt.figure(figsize=(16, 16))
-    plt.tight_layout()
-    plt.suptitle('Confusion Matrix')
-    sn.heatmap(df, annot=True, cmap=sn.color_palette("Blues"))
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True label")
-    plt.savefig(f"{dir}/confusion_matrix.png")
-    plt.close('all')
 
 
 def train(data_dir, model_dir, args):

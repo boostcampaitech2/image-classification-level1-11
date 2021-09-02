@@ -7,7 +7,7 @@ import random
 import re
 from importlib import import_module
 from pathlib import Path
-from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.metrics import f1_score
 import seaborn as sns
 import pandas as pd
 from tqdm import tqdm
@@ -17,19 +17,20 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-import warnings
-
 from torch.optim.lr_scheduler import StepLR
+import warnings
 
 from dataset import MaskBaseDataset, SubDataset
 from loss import create_criterion
 import model as module
-import optimizer
+import opt
+from util import draw_confusion_matrix
 
 from parse_config import ConfigParser
 
 # 경고메세지 끄기
 warnings.filterwarnings(action='ignore')
+
 
 def rand_bbox(size, lam):  # size : [Batch_size, Channel, Width, Height]
     W = size[2]
@@ -192,7 +193,7 @@ def train(data_dir, model_dir, args):
     base_optimizer = None
     if args.optimizer == "SAM":
         base_optimizer = getattr(import_module("torch.optim"), args.base_optimizer)
-        opt_module = getattr(import_module("optimizer"), args.optimizer)
+        opt_module = getattr(import_module("opt"), args.optimizer)
         optimizer = opt_module(
             filter(lambda p: p.requires_grad, model.parameters()),
             base_optimizer=base_optimizer,
@@ -251,7 +252,7 @@ def train(data_dir, model_dir, args):
             loss = closure()
             loss.backward()
 
-            if isinstance(optimizer, optimizer.SAM):
+            if isinstance(optimizer, opt.SAM):
                 optimizer.first_step(zero_grad=True)
                 loss = closure()
                 loss.backward()
@@ -309,7 +310,7 @@ def train(data_dir, model_dir, args):
             if epoch_f1 > best_f1_score:
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
                 best_f1_score = epoch_f1
-                draw_confusion_matrix(y_true, y_pred, save_dir)
+                draw_confusion_matrix(y_true, y_pred, save_dir, num_classes)
 
             torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
 
@@ -326,20 +327,6 @@ def train(data_dir, model_dir, args):
             logger.add_scalar("Val/f1_score", epoch_f1, epoch)
             logger.add_figure("results", figure, epoch)
 
-
-def draw_confusion_matrix(target, pred, path):
-    cm = confusion_matrix(target, pred)
-    df = pd.DataFrame(cm/np.sum(cm, axis=1)[:, None], index=list(range(18)), columns=list(range(18)))
-    df = df.fillna(0).round(4)
-
-    plt.figure(figsize=(16, 16))
-    plt.tight_layout()
-    plt.suptitle('Confusion Matrix')
-    sns.heatmap(df, annot=True, cmap=sns.color_palette("Blues"))
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True label")
-    plt.savefig(os.path.join(path, "confusion_matrix.png"))
-    plt.close('all')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
