@@ -24,7 +24,7 @@ from dataset import MaskBaseDataset, SubDataset
 from loss import create_criterion
 import model as module
 import opt
-from util import draw_confusion_matrix
+from util import draw_confusion_matrix, seed_everything
 
 from parse_config import ConfigParser
 
@@ -50,15 +50,6 @@ def rand_bbox(size, lam):  # size : [Batch_size, Channel, Width, Height]
     bby2 = np.clip(cy + cut_h // 2, 0, H)
 
     return bbx1, bby1, bbx2, bby2
-
-def seed_everything(seed):
-    # torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    # np.random.seed(seed)
-    # random.seed(seed)
 
 
 def get_lr(optimizer):

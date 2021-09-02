@@ -20,15 +20,9 @@ from sklearn.metrics import classification_report, f1_score, confusion_matrix
 
 from dataset import MaskBaseDataset, SubDataset
 from loss import create_criterion
-from util import read_json, update_argument, draw_confusion_matrix
+from util import read_json, update_argument, draw_confusion_matrix, seed_everything
 
 
-def seed_everything(seed):
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:

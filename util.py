@@ -6,6 +6,7 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import pandas as pd
 import numpy as np
+import torch
 
 
 def read_json(fname):
@@ -49,3 +50,10 @@ def draw_confusion_matrix(true, pred, dir, num_classes):
     plt.ylabel("True label")
     plt.savefig(f"{dir}/confusion_matrix.png")
     plt.close('all')
+
+
+def seed_everything(seed):
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
