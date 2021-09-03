@@ -293,24 +293,6 @@ if __name__ == '__main__':
     parser.add_argument('--base_optimizer', default="None", help="base optimizer when optimizer is SAM")
 
     args = parser.parse_args()
-
-    args.model = "VIT"
-    args.optimizer = "SAM"
-    args.pretrained = True
-    args.model_name = "vit_base_patch16_224"
-    # args.model_name = "efficientnet-b4"
-    args.epochs = 250
-    args.lr_decay_step = 20
-    args.batch_size = 64
-    args.valid_batch_size = 64
-    args.lr = float(1e-3)
-    args.criterion = "cross_entropy"
-
-    args.beta = 0.5
-    args.cutmix_prob = 0.5
-    
-    args.option = {"load": False, "path": "./runs/exp/best.pth"}
-    args.base_optimizer = "SGD"
     print(args)
 
     data_dir = args.data_dir
