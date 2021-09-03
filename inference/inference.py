@@ -3,6 +3,9 @@ import os
 from importlib import import_module
 from tqdm import tqdm
 
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
@@ -11,12 +14,14 @@ from dataset import TestDataset, MaskBaseDataset
 from util import read_json
 
 
-def load_model(saved_model, config, device):
+def load_model(saved_model, config, dataset_name, device):
     model_cls = getattr(import_module("model"), args.model)
-
+    num_classes = getattr(import_module("dataset"), dataset_name).num_classes
+    
     config.pretrained = False
     model = model_cls(
-        config
+        config,
+        num_classes
     )
 
     # tarpath = os.path.join(saved_model, 'best.tar.gz')
@@ -36,7 +41,7 @@ def inference(data_dir, model_dir, output_dir, args):
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    model = load_model(model_dir, args.config, device).to(device)
+    model = load_model(model_dir, args.config, args.dataset, device).to(device)
     model.eval()
 
     img_root = os.path.join(data_dir, 'images')
@@ -44,7 +49,7 @@ def inference(data_dir, model_dir, output_dir, args):
     info = pd.read_csv(info_path)
 
     img_paths = [os.path.join(img_root, img_id) for img_id in info.ImageID]
-    dataset = TestDataset(img_paths, args.resize)
+    dataset = TestDataset(img_paths)
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -139,6 +144,7 @@ if __name__ == '__main__':
     setattr(args, "config", configs["config"]) # 학습 시 사용했던 model의 configuration
     setattr(args, "model", configs["model"]) # 학습 시 사용했던 모델의 이름을 읽어옴
     setattr(args, "valid_augmentation", configs["valid_augmentation"]) # 학습 시 valid set에 적용했던 augmentation
+    setattr(args, "dataset", configs["dataset"]) 
     
     os.makedirs(output_dir, exist_ok=True)
 

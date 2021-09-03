@@ -3,6 +3,9 @@ import os
 from importlib import import_module
 from tqdm import tqdm
 
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
@@ -110,7 +113,7 @@ if __name__ == '__main__':
     setattr(args, "config", configs["config"]) # 학습 시 사용했던 model의 configuration
     setattr(args, "model", configs["model"]) # 학습 시 사용했던 모델의 이름을 읽어옴
     setattr(args, "valid_augmentation", configs["valid_augmentation"]) # 학습 시 valid set에 적용했던 augmentation
-    setattr(args, "dataset", configs["dataset"]) # 학습 시 valid set에 적용했던 augmentation
+    setattr(args, "dataset", configs["dataset"])
 
     os.makedirs(output_dir, exist_ok=True)
 
