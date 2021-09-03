@@ -18,8 +18,7 @@ import warnings
 from dataset import SubDataset
 from loss import create_criterion
 import opt
-from util import draw_confusion_matrix, seed_everything, increment_path, grid_image
-
+from util import draw_confusion_matrix, seed_everything, increment_path, grid_image, read_json, update_argument
 
 # 경고메세지 끄기
 warnings.filterwarnings(action='ignore')
@@ -66,16 +65,17 @@ def train(data_dir, model_dir, args):
     # -- augmentation
     transform_module = getattr(import_module("dataset"), args.augmentation)  # default: BaseAugmentation
     transform = transform_module(
+        resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
 
-    val_transform_module = getattr(import_module("dataset"), args.val_augmentation)
+    val_transform_module = getattr(import_module("dataset"), args.valid_augmentation)
     val_transform = val_transform_module(
+        resize=args.resize,
         mean=dataset.mean,
         std=dataset.std,
     )
-    # dataset.set_transform(transform)
 
     # -- data_loader
     train_set, val_set = dataset.split_dataset()
@@ -104,8 +104,7 @@ def train(data_dir, model_dir, args):
     # -- model
     model_module = getattr(import_module("model"), args.model)  # default: BaseModel
     model = model_module(
-        model_name=args.model_name,
-        pretrained=args.pretrained,
+        args.config,
         num_classes=num_classes
     )
 
@@ -289,10 +288,15 @@ if __name__ == '__main__':
     parser.add_argument('--beta', type=float, default=0, help="args.beta")
     parser.add_argument('--cutmix_prob', type=float, default=0, help="prob of cutmix")
     parser.add_argument('--option', type=dict, default={"load": False, "path": "./best.pth"})
-    parser.add_argument('--val_augmentation', type=str, default="ValAugmentation", help='data augmentation type for validation (default: ValAugmentation)')
+    parser.add_argument('--valid_augmentation', type=str, default="ValAugmentation", help='data augmentation type for validation (default: ValAugmentation)')
     parser.add_argument('--base_optimizer', default="None", help="base optimizer when optimizer is SAM")
+    parser.add_argument('--config', '-c', default='../config.json', type=str,
+                        help='config file path 건드릴 필요 없음. (default: ./config.json)')
+    parser.add_argument("--resize", nargs="+", type=int, default=[224, 224], help='resize size for image when training (defualt: [224, 224])')
 
     args = parser.parse_args()
+    configs = read_json(args.config)
+    args = update_argument(args, configs)
     print(args)
 
     data_dir = args.data_dir
