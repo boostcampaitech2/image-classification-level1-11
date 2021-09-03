@@ -462,3 +462,5 @@ class DJ_SeparatedDataset_Age(DJ_MaskAgeSubdivDataset):
         image_transform, multi_class_label = super().__getitem__(index)
         mask_label, gender_label, age_label = super().decode_multi_class(multi_class_label)
         return image_transform, age_label
+
+   
