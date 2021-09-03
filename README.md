@@ -7,7 +7,7 @@
 - COVID-19의 확산을 막기 위해 딥러닝 모델을 이용해 마스크 착용 여부를 판단하려고 합니다. 공공장소 입구에 놓인 카메라를 이용해 마스크를 제대로 썼는지 확인하고, 추가적으로 성별 및 연령대에 대한 구분도 진행합니다.
 - Class Description
 
-![56bd7d05-4eb8-4e3e-884d-18bd74dc4864..png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/807d6c1c-7d16-4d05-b8ea-067f0c75ee5c/56bd7d05-4eb8-4e3e-884d-18bd74dc4864..png)
+![56bd7d05-4eb8-4e3e-884d-18bd74dc4864](https://user-images.githubusercontent.com/81454649/132017034-dc9cc4c4-9acf-4634-aab0-7beaf5f48720.png)
 
 # Set up
 
