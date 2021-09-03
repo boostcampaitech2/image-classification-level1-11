@@ -52,7 +52,7 @@ for name in tqdm(os.listdir(source)):
 
     landmarks = predictor(frame, rect).parts()
     cv2.imwrite(os.path.join(targetpath, "normal.jpg"), frame)
-    '''
+
     for c, l in cls.items():
         frame_target = frame.copy()
         frame_noise = np.random.randint(0, 256, frame.shape, dtype=np.uint8)
@@ -62,4 +62,3 @@ for name in tqdm(os.listdir(source)):
 
         cv2.copyTo(frame_noise, frame_mask, frame_target)
         cv2.imwrite(os.path.join(targetpath, c+".jpg"), frame_target)
-    '''
