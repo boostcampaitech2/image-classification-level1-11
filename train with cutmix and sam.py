@@ -26,7 +26,6 @@ import model as module
 import opt
 from util import draw_confusion_matrix, seed_everything, increment_path, grid_image
 
-from parse_config import ConfigParser
 
 # 경고메세지 끄기
 warnings.filterwarnings(action='ignore')
