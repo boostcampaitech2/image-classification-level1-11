@@ -7,7 +7,8 @@
 - COVID-19의 확산을 막기 위해 딥러닝 모델을 이용해 마스크 착용 여부를 판단하려고 합니다. 공공장소 입구에 놓인 카메라를 이용해 마스크를 제대로 썼는지 확인하고, 추가적으로 성별 및 연령대에 대한 구분도 진행합니다.
 - Class Description
 
-![56bd7d05-4eb8-4e3e-884d-18bd74dc4864](https://user-images.githubusercontent.com/81454649/132017034-dc9cc4c4-9acf-4634-aab0-7beaf5f48720.png)
+<img src="https://user-images.githubusercontent.com/81454649/132017034-dc9cc4c4-9acf-4634-aab0-7beaf5f48720.png"  width="700" height="600">
+
 
 # Set up
 
@@ -34,9 +35,9 @@ timm>=0.4.12
 
 ```markup
 train/
-	|___ train.py  :  단일 모델을 학습시킵니다.
+  |___ train.py  :  단일 모델을 학습시킵니다.
   |___ train_with_cutmix_and_sam.py  :  학습 데이터에 대해 cutmix를 적용할 수 있고,
-	|                                     sam optimzier를 이용한 학습이 가능합니다.
+  |                                     sam optimzier를 이용한 학습이 가능합니다.
   |___ train_multi_model.py : Gender/Mask/Age 각각의 클래스를 예측하는 모델 학습을 위한 script
 
 inference/
@@ -45,7 +46,8 @@ inference/
 
 model.py 
 
-dataset.py : 기본적인 dataset fetch/load proedure 정의, Data Augmentation Method 구현.
+dataset.py : 기본적인 dataset fetch/load proedure 정의, Data Augmentation Method 구현
+
 AAFMask.py : AAF Dataset 사용 script
 
 loss.py : Focal Loss, LabelSmoothingLoss, F1 Loss 적용 with smooth parameter
