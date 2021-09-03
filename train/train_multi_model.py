@@ -3,22 +3,16 @@ import glob
 import json
 import os
 import multiprocessing
-import random
-import re
 from importlib import import_module
-from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import seaborn as sn
 import torch
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import classification_report, f1_score, confusion_matrix
 
-from dataset import MaskBaseDataset, SubDataset
+from dataset import SubDataset
 from loss import create_criterion
 from util import read_json, update_argument, draw_confusion_matrix, seed_everything, get_lr, increment_path, grid_image
 

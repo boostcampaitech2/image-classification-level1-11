@@ -8,9 +8,6 @@ import numpy as np
 import torch
 
 from torch.utils.data import Dataset, Subset, random_split
-from torchvision import transforms
-from torchvision.transforms import *
-
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import cv2

@@ -1,18 +1,13 @@
 import argparse
-import glob
 import json
 import multiprocessing
 import os
-import random
-import re
 from importlib import import_module
-from pathlib import Path
 from sklearn.metrics import f1_score
 import seaborn as sns
 import pandas as pd
 from tqdm import tqdm
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -20,9 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.optim.lr_scheduler import StepLR
 import warnings
 
-from dataset import MaskBaseDataset, SubDataset
+from dataset import SubDataset
 from loss import create_criterion
-import model as module
 import opt
 from util import draw_confusion_matrix, seed_everything, increment_path, grid_image
 
