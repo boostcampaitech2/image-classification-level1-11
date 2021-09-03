@@ -17,6 +17,7 @@ detector = dlib.get_frontal_face_detector()
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
+# 마스크 면을 그릴 landmarks
 cls = {}
 cls["mask1"] = [2,3,4,5,6,7,8,9,10,11,12,13,14,30]
 cls["mask2"] = [3,4,5,6,7,8,9,10,11,12,13,29]
