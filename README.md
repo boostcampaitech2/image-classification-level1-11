@@ -84,3 +84,7 @@ Test_Result_check.py : Test set inference 결과를 레이블과 함께 이미�
 - inference multi model
 
     `SM_CHANNEL_TRAIN=[train image dir] SM_MODEL_DIR=[model saving dir] python ./inference/inference_multi_model.py`
+    
+# Reference
+- sam - Sharpness-Aware Minimization : https://github.com/davda54/sam
+- CUTMIX : https://stages.ai/competitions/74/discussion/talk/post/493
